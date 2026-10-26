@@ -1,0 +1,47 @@
+name: Deploy
+
+on:
+  push:
+    branches: ["**"]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1.22.0
+        with:
+          node-version-file: .node-version
+          cache: true
+          run-install: |
+            - args: ['--frozen-lockfile']
+
+      - name: Deploy to production
+        if: github.ref == 'refs/heads/main'
+        run: vp exec void deploy --platform cloudflare
+
+      # void deploy always promotes the new version to production, so branches
+      # upload a version under a per-branch preview alias instead.
+      - name: Upload branch preview
+        if: github.ref != 'refs/heads/main'
+        shell: bash
+        run: |
+          alias=$(echo "$GITHUB_REF_NAME" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^[^a-z]+//' | cut -c1-40 | sed -E 's/-+$//')
+          vp build
+          vp exec wrangler versions upload --config dist/ssr/wrangler.json \
+            --preview-alias "$alias" --tag "${GITHUB_SHA::7}" --message "$GITHUB_REF_NAME" | tee upload.log
+          url=$(sed -n 's/.*Version Preview Alias URL: //p' upload.log)
+          echo "Preview for \`$GITHUB_REF_NAME\`: $url" >> "$GITHUB_STEP_SUMMARY"
