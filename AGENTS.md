@@ -6,3 +6,10 @@
 - Use Void's CLI and typed APIs. Before working with Void, read the relevant Markdown docs in `node_modules/void/docs/`; start with `guide/quickstart.md` for setup and `reference/cli.md` for commands.
 
 <!--/injected-by-void-->
+
+## Local database
+
+- Void runs a local D1 (SQLite) under `.void/`. `vpr dev` creates it and applies `db/migrations/` to it; `void db` commands target the same database unless you pass `--remote`. The deployed database only changes on `void deploy`.
+- Edit `db/schema.ts`, then `npx void db generate` to write a migration and `npx void db migrate` to apply it locally.
+- `pnpm import:cards` loads the Scryfall oracle cards into the local `cards` table (~20 s); `pnpm import:cards --remote` loads the deployed one.
+- Query it with `npx void db execute "SELECT count(*) FROM cards"`.
