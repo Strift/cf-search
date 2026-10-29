@@ -4,6 +4,7 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { computed, ref } from "vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import MTGCard from "@/components/mtg/Card.vue";
 
 const { messages, sendMessage, status, error } = useChat({
   transport: new DefaultChatTransport({ api: "/api/chat" }),
@@ -24,7 +25,21 @@ type Part = UIMessage["parts"][number];
 type ToolPart = Extract<Part, { state: string }> & { type: `tool-${string}` };
 type GlossaryHit = { term: string; definition: string };
 type RuleHit = { rule_id: string; rule_text: string; rule_path?: string };
-type SourceGroup = { id: string; label: string; glossary: GlossaryHit[]; rules: RuleHit[] };
+type CardFace = {
+  name: string;
+  mana_cost?: string;
+  type_line: string;
+  oracle_text?: string;
+  image_uris?: { normal: string };
+};
+type CardHit = CardFace & { oracle_id: string; card_faces?: CardFace[] };
+type SourceGroup = {
+  id: string;
+  label: string;
+  glossary: GlossaryHit[];
+  rules: RuleHit[];
+  cards: CardHit[];
+};
 
 function isToolPart(part: Part): part is ToolPart {
   return part.type.startsWith("tool-") && "state" in part;
@@ -34,6 +49,14 @@ function toolCall(part: ToolPart): string {
   const name = part.type.slice("tool-".length);
   const input = part.input as { q?: string; ruleId?: string } | undefined;
   return `${name}("${input?.q ?? input?.ruleId ?? ""}")`;
+}
+
+function cardImage(card: CardHit): string | undefined {
+  return card.image_uris?.normal ?? card.card_faces?.[0]?.image_uris?.normal;
+}
+
+function cardFaces(card: CardHit): CardFace[] {
+  return card.card_faces?.length ? card.card_faces : [card];
 }
 
 function toolHits(part: ToolPart): unknown[] {
@@ -62,6 +85,7 @@ const sources = computed<SourceGroup[]>(() => {
         label: toolCall(part),
         glossary: [],
         rules: [],
+        cards: [],
       };
       for (const hit of toolHits(part)) {
         if (part.type === "tool-searchGlossary") {
@@ -69,6 +93,12 @@ const sources = computed<SourceGroup[]>(() => {
           if (!seen.has(`g:${term}`)) {
             seen.add(`g:${term}`);
             group.glossary.push({ term, definition });
+          }
+        } else if (part.type === "tool-searchCards") {
+          const card = hit as CardHit;
+          if (!seen.has(`c:${card.oracle_id}`)) {
+            seen.add(`c:${card.oracle_id}`);
+            group.cards.push(card);
           }
         } else {
           const rule = hit as RuleHit;
@@ -78,13 +108,13 @@ const sources = computed<SourceGroup[]>(() => {
           }
         }
       }
-      if (group.glossary.length || group.rules.length) groups.push(group);
+      if (group.glossary.length || group.rules.length || group.cards.length) groups.push(group);
     }
   }
   return groups;
 });
 const sourceCount = computed(() =>
-  sources.value.reduce((n, g) => n + g.glossary.length + g.rules.length, 0),
+  sources.value.reduce((n, g) => n + g.glossary.length + g.rules.length + g.cards.length, 0),
 );
 </script>
 
@@ -158,6 +188,27 @@ const sourceCount = computed(() =>
           <div v-for="hit in group.glossary" :key="hit.term" class="rounded-md border p-3">
             <div class="font-medium">{{ hit.term }}</div>
             <p class="mt-1 text-muted-foreground">{{ hit.definition }}</p>
+          </div>
+          <div
+            v-for="card in group.cards"
+            :key="card.oracle_id"
+            class="flex gap-3 rounded-md border p-3"
+          >
+            <div v-if="cardImage(card)" class="w-20 shrink-0">
+              <MTGCard :name="card.name" :image-url="cardImage(card)!" />
+            </div>
+            <div class="flex min-w-0 flex-col gap-2">
+              <div v-for="face in cardFaces(card)" :key="face.name">
+                <div class="font-medium">
+                  {{ face.name }}
+                  <span class="font-normal text-muted-foreground">{{ face.mana_cost }}</span>
+                </div>
+                <div class="text-xs text-muted-foreground">{{ face.type_line }}</div>
+                <p v-if="face.oracle_text" class="mt-1 whitespace-pre-wrap text-muted-foreground">
+                  {{ face.oracle_text }}
+                </p>
+              </div>
+            </div>
           </div>
           <div v-for="hit in group.rules" :key="hit.rule_id" class="rounded-md border p-3">
             <div class="font-mono text-xs font-medium">{{ hit.rule_id }}</div>

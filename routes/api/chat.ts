@@ -5,19 +5,31 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { meilisearchSearch } from "@meilisearch/ai-sdk";
 import { Meilisearch } from "meilisearch";
 import { z } from "zod";
+import { HIDDEN_LAYOUTS } from "@/lib/search";
 
 const RULES_INDEX = "mtg_rules";
 const GLOSSARY_INDEX = "mtg_glossary";
+const CARDS_INDEX = "scryfall_cards";
 // Both indexes were configured with a Gemini embedder under this name.
 const EMBEDDER = "gemini";
 const MAX_STEPS = 8;
 
 const SYSTEM_PROMPT = `You are a Magic: The Gathering rules assistant.
-Answer only from what the tools return: look up terms in the glossary, search the Comprehensive Rules, and use getRule to read a rule and its sub-rules in full. Search again with different words if a result is thin; stop when the evidence is sufficient.
+Answer only from what the tools return: look up terms in the glossary, search the Comprehensive Rules, use getRule to read a rule and its sub-rules in full, and use searchCards to read the exact text of any card the question mentions. Search again with different words if a result is thin; stop when the evidence is sufficient.
 Cite rule numbers (e.g. 704.5a) for every claim. If the tools return nothing relevant, say so instead of guessing.
 Write plain text, no markdown.`;
 
 const RULE_ATTRIBUTES = ["rule_id", "rule_text", "rule_path"];
+const CARD_ATTRIBUTES = [
+  "oracle_id",
+  "name",
+  "mana_cost",
+  "type_line",
+  "oracle_text",
+  "keywords",
+  "card_faces",
+  "image_uris",
+];
 const RULE_ID = /^\d{3}(\.\d+[a-z]?)?$/;
 
 export const POST = defineHandler(async (c) => {
@@ -55,6 +67,20 @@ export const POST = defineHandler(async (c) => {
         searchParams: {
           limit: 10,
           attributesToRetrieve: RULE_ATTRIBUTES,
+          hybrid: { embedder: EMBEDDER, semanticRatio: 0.5 },
+        },
+      }),
+      searchCards: meilisearchSearch({
+        host,
+        apiKey,
+        indexUid: CARDS_INDEX,
+        description:
+          "Find Magic cards by name or by what they do (e.g. 'Lightning Bolt', 'creature with deathtouch and trample') and read their exact oracle text.",
+        searchParams: {
+          limit: 5,
+          distinct: "oracle_id",
+          filter: `layout NOT IN [${HIDDEN_LAYOUTS.join(", ")}]`,
+          attributesToRetrieve: CARD_ATTRIBUTES,
           hybrid: { embedder: EMBEDDER, semanticRatio: 0.5 },
         },
       }),
