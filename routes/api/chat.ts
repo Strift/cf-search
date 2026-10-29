@@ -92,7 +92,8 @@ export const POST = defineHandler(async (c) => {
         }),
         execute: async ({ ruleId }) => {
           const { hits } = await client.index(RULES_INDEX).search("", {
-            filter: `rule_id = "${ruleId}" OR ancestor_ids = "${ruleId}"`,
+            // Leaf rules carry dotted ids (702.12b); their parent/ancestor ids use dashes (702-12).
+            filter: `rule_id = "${ruleId}" OR ancestor_ids = "${ruleId}" OR ancestor_ids = "${ruleId.replace(".", "-")}"`,
             sort: ["rule_id:asc"],
             limit: 100,
             attributesToRetrieve: RULE_ATTRIBUTES,
