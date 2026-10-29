@@ -11,7 +11,8 @@
         "migrations_dir": "./db/migrations"
       }
     ],
-    "name": "cf-search"
+    "name": "cf-search",
+    "compatibility_date": "2026-02-24"
   },
-  "text": "{\n  \"account_id\": \"a7d53b90f78c293fa3d7e3c5be6de0e7\",\n  \"d1_databases\": [\n    {\n      \"binding\": \"DB\",\n      \"database_name\": \"cf-search-db\",\n      \"database_id\": \"ffe80dc7-80dd-4be6-8349-a8f6086d9754\",\n      \"migrations_dir\": \"./db/migrations\"\n    }\n  ],\n  \"name\": \"cf-search\"\n}\n"
+  "text": "{\n  \"account_id\": \"a7d53b90f78c293fa3d7e3c5be6de0e7\",\n  \"d1_databases\": [\n    {\n      \"binding\": \"DB\",\n      \"database_name\": \"cf-search-db\",\n      \"database_id\": \"ffe80dc7-80dd-4be6-8349-a8f6086d9754\",\n      \"migrations_dir\": \"./db/migrations\"\n    }\n  ],\n  \"name\": \"cf-search\",\n  \"compatibility_date\": \"2026-02-24\"\n}\n"
 }
