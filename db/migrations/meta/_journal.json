@@ -15,6 +15,13 @@
       "when": 1793249450256,
       "tag": "20261029045050_magical_kat_farrell",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793250567066,
+      "tag": "20261029051500_cards_fts",
+      "breakpoints": true
     }
   ]
 }
