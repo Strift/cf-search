@@ -17,3 +17,15 @@ export function parseSorting(value: string | undefined): Sorting {
 
 // Sentinel for "no set filter"; must not collide with a Scryfall set code (e.g. `all` is Alliances).
 export const ALL_SETS = "*";
+
+// Same non-playable layouts as mtgbuilder.ai's buildJunkFilters.
+export const HIDDEN_LAYOUTS = [
+  "token",
+  "double_faced_token",
+  "emblem",
+  "planar",
+  "scheme",
+  "vanguard",
+  "art_series",
+  "reversible_card",
+];

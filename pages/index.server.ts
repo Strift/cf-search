@@ -1,6 +1,6 @@
 import { defineHandler, defineHead, type InferProps } from "void";
 import { db, sql } from "void/db";
-import { parseSorting, type Sorting } from "@/lib/search";
+import { parseSorting, type Sorting, HIDDEN_LAYOUTS } from "@/lib/search";
 
 export type Props = InferProps<typeof loader>;
 
@@ -16,18 +16,6 @@ export type SetOption = { code: string; name: string };
 export type Trace = { search: number; sets: number; server: number };
 
 const RESULT_LIMIT = 100;
-// Same non-playable layouts as mtgbuilder.ai's buildJunkFilters.
-const HIDDEN_LAYOUTS = [
-  "token",
-  "double_faced_token",
-  "emblem",
-  "planar",
-  "scheme",
-  "vanguard",
-  "art_series",
-  "reversible_card",
-];
-
 const POPULARITY = sql`cards.edhrec_rank IS NULL, cards.edhrec_rank`;
 
 // Same semantics as mtgbuilder.ai's buildMeilisearchSort; popularity breaks ties.

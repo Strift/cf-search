@@ -70,7 +70,12 @@ watch(
 
 <template>
   <header class="flex flex-col gap-4">
-    <h1 class="text-2xl font-semibold tracking-tight">Card search</h1>
+    <div class="flex items-baseline justify-between gap-4">
+      <h1 class="text-2xl font-semibold tracking-tight">Card search</h1>
+      <a href="/chat" class="text-sm text-muted-foreground underline-offset-4 hover:underline"
+        >Rules chat</a
+      >
+    </div>
     <Input
       v-model="query"
       type="search"
