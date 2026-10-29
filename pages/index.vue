@@ -3,7 +3,7 @@ import type { Props } from "./index.server";
 import { useNavigation, useRouter } from "@void/vue";
 import { ref, watch } from "vue";
 import { Input } from "@/components/ui/input";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import MTGCard from "@/components/mtg/Card.vue";
 
 const props = defineProps<Props>();
 const router = useRouter();
@@ -47,20 +47,11 @@ watch(query, (value) => {
     No cards match "{{ q }}".
   </p>
   <section v-else class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-    <Card v-for="card in cards" :key="card.oracleId" size="sm">
-      <img
-        v-if="card.imageUrl"
-        :src="card.imageUrl"
-        :alt="card.name"
-        loading="lazy"
-        class="aspect-[488/680] w-full object-cover"
-      />
-      <CardHeader>
-        <CardTitle>{{ card.name }}</CardTitle>
-        <CardDescription>
-          {{ card.typeLine }}<template v-if="card.manaCost"> · {{ card.manaCost }}</template>
-        </CardDescription>
-      </CardHeader>
-    </Card>
+    <MTGCard
+      v-for="card in cards"
+      :key="card.oracleId"
+      :name="card.name"
+      :image-url="card.imageUrl ?? ''"
+    />
   </section>
 </template>
