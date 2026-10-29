@@ -41,7 +41,11 @@ export const POST = defineHandler(async (c) => {
   const openrouter = createOpenRouter({ apiKey: env.OPENROUTER_API_KEY });
 
   const result = streamText({
-    model: openrouter.chat(env.OPENROUTER_MODEL),
+    model: openrouter.chat(env.OPENROUTER_MODEL, {
+      extraBody: env.OPENROUTER_REASONING_EFFORT
+        ? { reasoning: { effort: env.OPENROUTER_REASONING_EFFORT } }
+        : undefined,
+    }),
     system: SYSTEM_PROMPT,
     messages: await convertToModelMessages(messages),
     stopWhen: stepCountIs(MAX_STEPS),
